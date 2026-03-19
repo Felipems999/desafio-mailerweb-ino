@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (username_email: string, password: string) => {
         const params = new URLSearchParams();
 
-        params.append("username_email", username_email);
+        params.append("username", username_email);
         params.append("password", password);
 
         const response = await serviceAPI.post("/users/login", params, {
