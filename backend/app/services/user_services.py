@@ -1,0 +1,129 @@
+import os
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+
+import jwt
+from jwt.exceptions import InvalidTokenError
+from pwdlib import PasswordHash
+
+from typing import Annotated
+
+from dotenv import load_dotenv
+
+from datetime import timedelta, datetime, timezone
+
+import logging
+
+from ..models import UserDB, Token, TokenData
+from ..schemas import UserInDB, User
+from ..db import get_db
+
+load_dotenv("../.env")
+
+SECRET_KEY = os.getenv("API_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+logger = logging.getLogger(__name__)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
+
+password_hash = PasswordHash.recommended()
+
+
+def get_user(db: Session, username_email: str):
+    try:
+        user = (
+            db.query(UserDB)
+            .filter(
+                (UserDB.username == username_email) | (UserDB.email == username_email)
+            )
+            .first()
+        )
+
+        if not user:
+            logger.info("Usuário não encontrado. Retornando 'None'.")
+            return None
+
+        return UserInDB.model_validate(user)
+    except SQLAlchemyError as e:
+        logger.error(f"Erro ao buscar usuário de username {username_email}")
+        raise e
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
+):
+    credential_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Não foi possível validar a credencial!",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        username: str = payload.get("sub")
+        if username is None:
+            raise credential_exception
+
+        token_data = TokenData(username=username)
+    except InvalidTokenError:
+        logger.error("Token inválido!")
+        raise credential_exception
+
+    user = get_user(db, token_data.username)
+
+    if user is None:
+        raise credential_exception
+
+    return user
+
+
+async def get_current_active_user(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def authenticate_user(
+    db: Session,
+    username: str,
+    password: str,
+):
+    user = get_user(db, username)
+    if not user or not verify_password(password, user.hashed_password):
+        return False
+
+    return user
+
+
+def create_access_token(
+    data: dict,
+    expires_token: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+):
+    encode = data.copy()
+
+    if expires_token:
+        expire = datetime.now(timezone.utc) + expires_token
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    encode.update({"exp": expire})
+    encode_jwt = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    return encode_jwt
+
+
+def verify_password(plain_password, hashed_password):
+    return password_hash.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return password_hash.hash(password)

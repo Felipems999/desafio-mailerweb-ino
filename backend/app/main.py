@@ -7,6 +7,8 @@ import httpx
 
 from .routes import ROUTERS
 from .config import Config
+from .db import engine, Base, get_db
+from .models import *
 
 import logging
 
@@ -29,16 +31,13 @@ async def lifespan(app: FastAPI):
 
     logger.info("Iniciando conexão com os bancos de dados...")
     try:
+        Base.metadata.create_all(bind=engine)
         logger.info("PostgreSQL conectado com sucesso!")
 
     except Exception as e:
         logger.error(f"Falha ao conectar ao PostgreSQL: {e}")
 
     yield
-
-    logger.info("Encerrando conexões...")
-    # config.client.close()
-    logger.info("Conexões encerradas.")
 
     logger.info("Encerrando recursos...")
     await app.state.http_client.aclose()
@@ -53,6 +52,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
     config.REACT_PUBLIC_API_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 app.add_middleware(
