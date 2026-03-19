@@ -1,252 +1,116 @@
+🚀 Booking App Manager
+Sistema de gerenciamento de reuniões e reservas de salas. O projeto utiliza uma arquitetura moderna com FastAPI no backend, React no frontend e infraestrutura conteinerizada para serviços de suporte.
 
-# 🧪 Coding Test — Fullstack
-## Meeting Room Booking + Async Notification System
+🛠 Pré-requisitos
+Antes de começar, você precisará ter instalado em sua máquina:
 
----
+Python 3.12+
 
-# 📌 Sobre o Desafio
+React.js + Vite & pnpm
 
-Você deverá desenvolver uma aplicação **Fullstack** para gerenciamento de reservas de salas com um sistema de notificação assíncrono por e-mail.
+Docker & Docker Compose
 
-O objetivo é avaliar como você:
+⚙️ Configuração das Variáveis de Ambiente
+O projeto utiliza arquivos .env para gerenciar credenciais e conexões. Este passo é obrigatório antes de iniciar os servidores.
 
-- Estrutura a aplicação
-- Modela os dados
-- Implementa regras de negócio
-- Trata concorrência
-- Organiza processamento assíncrono
-- Escreve testes
-- Documenta decisões técnicas
+Backend
+Navegue até a pasta backend/.
 
-Você tem liberdade de arquitetura e implementação, desde que atenda aos requisitos descritos.
+Copie o arquivo de exemplo:
 
----
+Bash
+cp .env.example .env
+Abra o arquivo .env e ajuste as credenciais se necessário.
 
-# ⏳ Prazo
+Nota Importante: No seu docker-compose.yml, o PostgreSQL está mapeado para a porta 15432. Certifique-se de que sua DATABASE_URL no .env reflete isso:
+DATABASE_URL="postgresql://user:securepassword123@localhost:15432/backend"
 
-Após receber o link do desafio, você tem **3 dias corridos** para submeter sua solução.
+Frontend (Opcional/Ajuste)
+Certifique-se de que a REACT_PUBLIC_API_URL aponta para onde seu FastAPI está rodando (geralmente http://localhost:8000).
 
----
+## Rodando o projeto
 
-# 🚀 Como proceder
+🏗️ Passo 1: Infraestrutura (Docker)
+O backend depende de serviços como PostgreSQL, RabbitMQ e MailHog. Todos estão configurados no Docker Compose dentro da pasta backend/.
 
-1. Faça o **fork** do repositório oficial:
-   https://github.com/MailerWeb/desafio-mailerweb-ino
+Acesse a pasta do backend:
 
-2. Desenvolva sua solução no seu fork.
+Bash
+cd backend
+Certifique-se de ter um arquivo .env com as credenciais necessárias.
 
-3. Ao finalizar, envie o link do seu repositório para avaliação.
+Suba os containers:
 
----
+Bash
+docker-compose up -d
+Serviços disponíveis após o boot:
 
-# 🎯 Objetivo do Projeto
+PostgreSQL: localhost:15432
 
-Construir uma aplicação que permita:
+pgAdmin (Gestão DB): localhost:16543 (Acesse com o e-mail do seu .env)
 
-- Criar e gerenciar salas
-- Criar reservas com prevenção de conflito de horário
-- Editar e cancelar reservas
-- Notificar automaticamente os participantes por e-mail quando houver mudanças
+RabbitMQ: localhost:15672 (Painel de gerenciamento)
 
----
+MailHog: localhost:8025 (Interface para visualizar e-mails de teste)
 
-# 🧱 Stack
+🐍 Passo 2: Backend (FastAPI)
+Com os containers rodando, instale as dependências do Python:
 
-## Backend
-- Python 3.10+
-- Framework livre (FastAPI, Flask, Django etc.)
-- Banco livre (SQLite permitido, PostgreSQL recomendado)
+Bash
+# Recomendado usar ambiente virtual (venv)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
 
-## Frontend
-- React ou Next.js
+pip install -r requirements.txt
+Inicie o servidor de desenvolvimento:
 
-Estrutura de pastas livre (monorepo ou separadas).
+Bash
+fastapi run dev app/main.py
+O backend estará rodando em: http://localhost:8000
 
----
+Documentação interativa (Swagger): http://localhost:8000/docs
 
-# 📖 Contexto do Sistema
+⚛️ Passo 3: Frontend (React + MUI)
+Abra um novo terminal e acesse a pasta do frontend:
 
-A empresa precisa organizar reservas de salas e garantir que os participantes sejam notificados automaticamente quando uma reunião for:
+Bash
+cd frontend
+Instale as dependências usando o pnpm:
 
-- Criada
-- Alterada
-- Cancelada
+Bash
+pnpm install
+Inicie o servidor web:
 
-As notificações devem ser processadas de forma **assíncrona**, via worker.
+Bash
+pnpm run dev
+O frontend estará disponível em: http://localhost:5173 (ou a porta indicada no terminal).
 
----
-
-# 🔧 Requisitos Funcionais
-
-## 1️⃣ Salas
-
-- Criar sala
-- Listar salas
-- Visualizar detalhes
-- Nome único
-- Capacidade válida
-
----
-
-## 2️⃣ Reservas
-
-Uma reserva deve conter:
-
-- Título
-- Sala
-- Horário de início e fim
-- Status (ativa ou cancelada)
-- Participantes
-
-### Regras obrigatórias
-
-- Datas em ISO 8601 com timezone
-- `start_at < end_at`
-- Duração mínima: 15 minutos
-- Duração máxima: 8 horas
-- Não pode haver sobreposição de reservas ativas na mesma sala
-- Reservas canceladas não devem ser removidas
-
-### Overlap
-
-Existe conflito quando:
-
-    new_start < existing_end AND new_end > existing_start
-
-Reservas que apenas encostam no horário são permitidas.
-
-### Concorrência
-
-A aplicação deve impedir que duas requisições simultâneas criem reservas conflitantes.
-
-Documente sua estratégia (transação, lock, constraint etc.).
-
----
-
-# 🔐 Autenticação
-
-Deve existir mecanismo de autenticação.
-
-Você pode usar:
-
-- JWT
-- Token fixo
-- Sistema simplificado
-
-Deve existir conceito de usuário.
-
-Usuários autenticados podem:
-
-- Criar reservas
-- Editar reservas
-- Cancelar reservas
-
----
-
-# ✉️ Sistema de Mensageria (Obrigatório)
-
-Além das reservas, o sistema deve implementar um mecanismo assíncrono de notificação por e-mail usando padrão **Outbox + Worker**.
-
-## Eventos que devem gerar notificação
-
-- BOOKING_CREATED
-- BOOKING_UPDATED
-- BOOKING_CANCELED
-
-## Requisitos
-
-Ao criar/alterar/cancelar uma reserva:
-
-1. Persistir alteração da reserva
-2. Criar um evento na tabela de Outbox
-3. Garantir que ambos ocorram na mesma transação
-
----
-
-## Worker
-
-Deve existir um worker separado que:
-
-- Busca eventos pendentes
-- Processa envio de e-mails
-- Marca como processado
-- Implementa retry com controle de tentativas
-- Evita envio duplicado (idempotência)
-
-O worker pode ser:
-
-- Celery
-- RQ
-- Processo simples em loop
-- Command separado
-
-Documente como executar.
-
----
-## Conteúdo mínimo do e-mail
-
-- Título da reunião
-- Sala
-- Horário
-- Tipo de evento (criada, alterada, cancelada)
-
-Pode ser texto simples.
-
----
-
-# 🧪 Testes
-
-## Backend
-
-Esperamos testes cobrindo:
-
-- Validação de datas
-- Conflito de reserva
-- Permissões
-- Criação de evento no outbox
-- Processamento pelo worker
-- Idempotência de envio
-
-## Frontend
-
-Testes mínimos para:
-
-- Criar reserva
-- Exibir erro de conflito
-- Fluxo básico de login
-- Integração com backend
-
----
-
-# 🖥️ Frontend
-
-Deve permitir:
-
-- Login
-- Listar salas
-- Criar reserva
-- Editar/cancelar reserva
-
-UX deve tratar:
-
-- Loading
-- Erros
-- Feedback ao usuário
-
----
-
-# 📦 Entrega
-
-Seu repositório deve conter:
-
-- Backend
-- Frontend
-- Testes
-- README com:
-  - Como rodar backend
-  - Como rodar frontend
-  - Como rodar worker
-  - Variáveis de ambiente
-  - Decisões técnicas
-
-Boa sorte 🚀
+🧪 Executando Testes
+Backend (Pytest)
+Bash
+cd backend
+python -m pytest
+Frontend (Vitest)
+Bash
+cd frontend
+pnpm test
+📂 Estrutura do Projeto
+Plaintext
+.
+├── backend/
+│   ├── app/                # Lógica da aplicação (FastAPI)
+│   ├── tests/              # Testes unitários e de integração
+│   ├── docker-compose.yml  # Infraestrutura (DB, Broker, Email)
+│   └── requirements.txt    # Dependências Python
+└── frontend/
+    ├── src/
+    │   ├── components/     # Componentes reutilizáveis (MUI)
+    │   ├── pages/          # Páginas da aplicação
+    │   └── tests/          # Testes Vitest + MSW
+    ├── package.json
+    └── vite.config.ts
+💡 Notas Adicionais
+Fuso Horário: Certifique-se de que o frontend está enviando datas no formato ISO com offset para evitar conflitos de agendamento no backend.
+
+MailHog: Todas as notificações de confirmação de reserva enviadas pelo sistema podem ser visualizadas localmente em http://localhost:8025.
