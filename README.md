@@ -18,8 +18,9 @@ Navegue até a pasta backend/.
 
 Copie o arquivo de exemplo:
 
-Bash
+```
 cp .env.example .env
+```
 Abra o arquivo .env e ajuste as credenciais se necessário.
 
 Nota Importante: No seu docker-compose.yml, o PostgreSQL está mapeado para a porta 15432. Certifique-se de que sua DATABASE_URL no .env reflete isso:
@@ -35,14 +36,18 @@ O backend depende de serviços como PostgreSQL, RabbitMQ e MailHog. Todos estão
 
 Acesse a pasta do backend:
 
-Bash
+```
 cd backend
+```
+
 Certifique-se de ter um arquivo .env com as credenciais necessárias.
 
 Suba os containers:
 
-Bash
+```
 docker-compose up -d
+```
+
 Serviços disponíveis após o boot:
 
 PostgreSQL: localhost:15432
@@ -56,17 +61,22 @@ MailHog: localhost:8025 (Interface para visualizar e-mails de teste)
 🐍 Passo 2: Backend (FastAPI)
 Com os containers rodando, instale as dependências do Python:
 
-Bash
-# Recomendado usar ambiente virtual (venv)
+```
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate   # Windows
+```
 
+```
 pip install -r requirements.txt
+```
+
 Inicie o servidor de desenvolvimento:
 
-Bash
+```
 fastapi run dev app/main.py
+```
+
 O backend estará rodando em: http://localhost:8000
 
 Documentação interativa (Swagger): http://localhost:8000/docs
@@ -74,27 +84,37 @@ Documentação interativa (Swagger): http://localhost:8000/docs
 ⚛️ Passo 3: Frontend (React + MUI)
 Abra um novo terminal e acesse a pasta do frontend:
 
-Bash
+```
 cd frontend
+```
+
 Instale as dependências usando o pnpm:
 
-Bash
+```
 pnpm install
+```
+
 Inicie o servidor web:
 
-Bash
+```
 pnpm run dev
+```
+
 O frontend estará disponível em: http://localhost:5173 (ou a porta indicada no terminal).
 
 🧪 Executando Testes
 Backend (Pytest)
-Bash
+
+```
 cd backend
 python -m pytest
 Frontend (Vitest)
-Bash
+```
+
+```
 cd frontend
 pnpm test
+```
 
 💡 Notas Adicionais
 Fuso Horário: Certifique-se de que o frontend está enviando datas no formato ISO com offset para evitar conflitos de agendamento no backend.
