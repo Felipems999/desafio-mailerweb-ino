@@ -1,6 +1,12 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime, timedelta
 from typing import List
+from enum import Enum
+
+
+class BookingStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    CANCELED = "CANCELED"
 
 
 class BookingBase(BaseModel):
