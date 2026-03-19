@@ -1,5 +1,6 @@
 import time
 import logging
+import json
 from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app.models import OutboxEventDB
@@ -20,6 +21,7 @@ def process_outbox_events():
                 db.query(OutboxEventDB)
                 .filter(OutboxEventDB.status == OutboxEventStatus.PENDING)
                 .limit(10)
+                .with_for_update(skip_locked=True)
                 .all()
             )
 
@@ -27,9 +29,13 @@ def process_outbox_events():
                 logger.info(f"Pocessando envento {event.id} | {event.event_type}")
 
                 try:
-                    logger.info(
-                        f"Enviando e-mails para: {event.payload.get('participants')}"
+                    payload = (
+                        json.loads(event.payload)
+                        if isinstance(event.payload, str)
+                        else event.payload
                     )
+
+                    logger.info(f"Enviando e-mails para: {payload.get('participants')}")
 
                     event.status = OutboxEventStatus.PROCESSED
 
@@ -42,7 +48,6 @@ def process_outbox_events():
                         logger.error(
                             f"Número máximo de tentativas excedida! Abortando permanentemente envio do envento {event.id}!"
                         )
-                        raise e
             if events:
                 db.commit()
 
@@ -50,7 +55,6 @@ def process_outbox_events():
             logger.error("Erro no banco de dados!")
             db.rollback()
 
-            raise e
         finally:
             db.close()
 

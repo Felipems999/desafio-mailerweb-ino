@@ -1,4 +1,4 @@
-from app.db.db import Base
+from ..db import *
 
 from .user import *
 from .room import *

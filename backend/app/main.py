@@ -48,8 +48,6 @@ config = Config()
 
 app = FastAPI(title=config.APP_NAME, debug=config.DEBUG, lifespan=lifespan)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 origins = [
     config.REACT_PUBLIC_API_URL,
     "http://localhost:5173",
