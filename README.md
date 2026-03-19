@@ -95,21 +95,7 @@ Frontend (Vitest)
 Bash
 cd frontend
 pnpm test
-📂 Estrutura do Projeto
-Plaintext
-.
-├── backend/
-│   ├── app/                # Lógica da aplicação (FastAPI)
-│   ├── tests/              # Testes unitários e de integração
-│   ├── docker-compose.yml  # Infraestrutura (DB, Broker, Email)
-│   └── requirements.txt    # Dependências Python
-└── frontend/
-    ├── src/
-    │   ├── components/     # Componentes reutilizáveis (MUI)
-    │   ├── pages/          # Páginas da aplicação
-    │   └── tests/          # Testes Vitest + MSW
-    ├── package.json
-    └── vite.config.ts
+
 💡 Notas Adicionais
 Fuso Horário: Certifique-se de que o frontend está enviando datas no formato ISO com offset para evitar conflitos de agendamento no backend.
 
